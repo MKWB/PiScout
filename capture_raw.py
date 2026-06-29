@@ -88,8 +88,12 @@ class RawCapture:
     so there is no per-frame socket creation overhead.
 
     Usage:
-        with RawCapture("eth0") as cap:
+        cap = RawCapture("eth0")
+        cap.open()
+        try:
             protocol, frame = cap.receive_frame(timeout=2.0)
+        finally:
+            cap.close()
     """
 
     def __init__(self, interface: str) -> None:
@@ -214,10 +218,3 @@ class RawCapture:
                 return "cdp", frame
 
             # Non-matching frame (e.g. ARP, STP) — discard and check remaining time.
-
-    def __enter__(self) -> "RawCapture":
-        self.open()
-        return self
-
-    def __exit__(self, *_) -> None:
-        self.close()

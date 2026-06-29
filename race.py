@@ -142,9 +142,12 @@ def run(
     if not socket_ready.wait(timeout=2.0):
         log.warning("Race: passive socket did not open within 2s on %s", interface)
 
-    # ---- Step 3: Send triggers NOW that the socket is listening ----
-    log.debug("Race: socket ready — sending triggers on %s", interface)
-    trigger.send_all_triggers(interface, local_mac)
+    # ---- Step 3: Send the LLDP trigger NOW that the socket is listening ----
+    # CDP is handled entirely by the persistent burst started in Step 4 — its
+    # first frame goes out immediately, so no separate one-shot CDP send is
+    # needed here.
+    log.debug("Race: socket ready — sending LLDP trigger on %s", interface)
+    trigger.send_lldp_trigger(interface, local_mac)
 
     # ---- Step 4: Start persistent CDP burst thread ----
     # Sends CDP frames every 100ms throughout the entire discovery window.

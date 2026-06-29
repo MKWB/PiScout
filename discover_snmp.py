@@ -98,35 +98,23 @@ _OID_LLDP_LOC_PORT_DESC = "1.0.8802.1.1.2.1.3.7.1.4"
 
 def _get_communities() -> list[str]:
     """Build the ordered list of SNMP community strings to try."""
-    built_in = list(getattr(config, "SNMP_COMMUNITY_STRINGS", [
-        "public", "cisco", "community", "private",
-        "manager", "snmp", "monitor", "readonly",
-    ]))
-    user = str(getattr(config, "SNMP_USER_COMMUNITY", "")).strip()
+    built_in = list(config.SNMP_COMMUNITY_STRINGS)
+    user = str(config.SNMP_USER_COMMUNITY).strip()
     if user and user not in built_in:
         return [user] + built_in
     return built_in
 
 
 def _snmp_timeout() -> int:
-    try:
-        return max(1, int(getattr(config, "SNMP_TIMEOUT", 1)))
-    except (TypeError, ValueError):
-        return 1
+    return max(1, int(config.SNMP_TIMEOUT))
 
 
 def _dhcp_wait() -> float:
-    try:
-        return max(1.0, float(getattr(config, "SNMP_DHCP_WAIT", 8.0)))
-    except (TypeError, ValueError):
-        return 8.0
+    return max(1.0, float(config.SNMP_DHCP_WAIT))
 
 
 def _arp_wait() -> float:
-    try:
-        return max(1.0, float(getattr(config, "SNMP_ARP_WAIT", 3.0)))
-    except (TypeError, ValueError):
-        return 3.0
+    return max(1.0, float(config.SNMP_ARP_WAIT))
 
 
 # ============================================================

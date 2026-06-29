@@ -36,17 +36,12 @@ _ETH_HEADER_LEN = 14
 
 # --- LLDP TLV type codes ---
 _TLV_END         = 0
-_TLV_CHASSIS_ID  = 1
 _TLV_PORT_ID     = 2
 _TLV_TTL         = 3
 _TLV_PORT_DESCR  = 4
 _TLV_SYS_NAME    = 5
 _TLV_MGMT_ADDR   = 8
 _TLV_ORG_SPEC    = 127
-
-# --- Chassis ID subtypes ---
-_CHASSIS_SUBTYPE_MAC     = 4
-_CHASSIS_SUBTYPE_NET     = 5
 
 # --- Port ID subtypes ---
 _PORT_SUBTYPE_IFALIAS    = 1
@@ -57,7 +52,6 @@ _PORT_SUBTYPE_LOCAL      = 7
 
 # --- Management Address subtypes ---
 _MGMT_ADDR_IPV4 = 1
-_MGMT_ADDR_IPV6 = 2
 
 # --- Organizationally Specific OUIs ---
 _OUI_IEEE_8021  = b"\x00\x80\xc2"   # IEEE 802.1
@@ -121,38 +115,6 @@ def _decode_string(value: bytes) -> str:
         text = value.decode("latin-1").strip()
 
     return sanitize_display_string(text)
-
-
-def _extract_chassis_id(tlvs: dict[int, list[bytes]]) -> str:
-    """
-    Extract a human-readable chassis identifier.
-
-    Subtypes:
-        4 (MAC address)    -> formatted as XX:XX:XX:XX:XX:XX
-        5 (network address)-> formatted as dotted-decimal IPv4 if 4 bytes
-        1,2,3,6,7          -> decoded as string
-    """
-    values = tlvs.get(_TLV_CHASSIS_ID, [])
-    if not values:
-        return ""
-
-    value = values[0]
-    if len(value) < 2:
-        return ""
-
-    subtype = value[0]
-    data    = value[1:]
-
-    if subtype == _CHASSIS_SUBTYPE_MAC and len(data) == 6:
-        return ":".join(f"{b:02x}" for b in data)
-
-    if subtype == _CHASSIS_SUBTYPE_NET and len(data) >= 2:
-        addr_family = data[0]
-        addr_bytes  = data[1:]
-        if addr_family == _MGMT_ADDR_IPV4 and len(addr_bytes) == 4:
-            return socket.inet_ntoa(addr_bytes)
-
-    return _decode_string(data)
 
 
 def _extract_system_name(tlvs: dict[int, list[bytes]]) -> str:
@@ -251,18 +213,6 @@ def _extract_management_ip(tlvs: dict[int, list[bytes]]) -> str:
         if addr_subtype == _MGMT_ADDR_IPV4 and len(addr_data) == 4:
             return socket.inet_ntoa(addr_data)
 
-    # IPv6 fallback — return first address as a hex string if no IPv4 found.
-    for value in values:
-        if len(value) < 3:
-            continue
-
-        addr_string_len = value[0]
-        addr_subtype    = value[1]
-        addr_data       = value[2: 1 + addr_string_len]
-
-        if addr_subtype == _MGMT_ADDR_IPV6 and len(addr_data) == 16:
-            return socket.inet_ntop(socket.AF_INET6, addr_data)
-
     return ""
 
 
@@ -333,7 +283,6 @@ def parse_lldp_frame(frame: bytes) -> dict[str, str]:
             The frame must start at the Ethernet header (destination MAC).
 
     Returns a dict with the shared neighbor schema:
-        source      : "LLDP"
         switch_name : switch hostname (domain stripped)
         switch_ip   : management IP address
         port        : remote switch port name (shortened)
@@ -343,7 +292,6 @@ def parse_lldp_frame(frame: bytes) -> dict[str, str]:
     Missing fields are returned as empty strings.
     """
     result = {
-        "source":      "LLDP",
         "switch_name": "",
         "switch_ip":   "",
         "port":        "",

@@ -265,7 +265,6 @@ def parse_cdp_frame(frame: bytes) -> dict[str, str]:
             The frame must start at the Ethernet header (destination MAC).
 
     Returns a dict with the shared neighbor schema:
-        source      : "CDP"
         switch_name : switch hostname (domain stripped)
         switch_ip   : management IP address
         port        : remote switch port name (shortened)
@@ -275,7 +274,6 @@ def parse_cdp_frame(frame: bytes) -> dict[str, str]:
     Missing fields are returned as empty strings.
     """
     result = {
-        "source":      "CDP",
         "switch_name": "",
         "switch_ip":   "",
         "port":        "",

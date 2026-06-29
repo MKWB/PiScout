@@ -19,7 +19,7 @@ What this file does:
 - Return the first valid result as a normalized dict
 
 What this file does NOT do:
-- Send trigger frames (race.py calls trigger.send_all_triggers before starting threads)
+- Send trigger frames (race.py sends triggers before starting threads)
 - Talk to the display
 - Manage session state
 - Call SNMP or perform any active network queries
@@ -55,10 +55,7 @@ _COMPLETE_FIELDS = ("switch_name", "port")
 
 
 def _get_receive_timeout() -> float:
-    try:
-        return max(0.5, float(getattr(config, "RAW_RECEIVE_TIMEOUT", 2.0)))
-    except (TypeError, ValueError):
-        return 2.0
+    return max(0.5, float(config.RAW_RECEIVE_TIMEOUT))
 
 
 def _is_self_generated(frame: bytes, local_mac: Optional[bytes]) -> bool:
