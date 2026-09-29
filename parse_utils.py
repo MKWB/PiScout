@@ -104,6 +104,7 @@ def shorten_interface_name(port_name: str) -> str:
         ("HundredGigabitEthernet",     "Hu"),
         ("HundredGigE",                "Hu"),
         ("TenGigabitEthernet",         "Te"),
+        ("FiveGigabitEthernet",        "Fi"),
         ("GigabitEthernet",            "Gi"),
         ("FastEthernet",               "Fa"),
         ("Port-channel",               "Po"),
