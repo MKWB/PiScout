@@ -53,7 +53,7 @@ LINK: 1G FD
 
 - Raspberry Pi Zero 2 W
 - 40-pin male GPIO header
-- Waveshare 2.13" e-Paper HAT+ display (SKU 27467)
+- Waveshare 2.7" e-Paper HAT V2 display (264x176)
 - Waveshare PoE Ethernet / USB HUB BOX (SKU 20895)
 
 ---

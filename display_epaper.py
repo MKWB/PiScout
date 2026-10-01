@@ -1,11 +1,11 @@
 """
 display_epaper.py
 
-This file only handles the Waveshare 2.13" V3 e-paper display.
+This file only handles the Waveshare 2.7" V2 e-paper display (264x176).
 
 What this file does:
 - Start the e-paper display
-- Draw a fixed header and 5 body lines onto an image
+- Draw a fixed header and 6 body lines onto an image
 - Show that image on the screen using partial or full refresh as appropriate
 - Limit how often the screen refreshes
 - Force a refresh when VLAN or VOICE changes
@@ -25,7 +25,7 @@ import threading
 import time
 
 from PIL import Image, ImageDraw, ImageFont
-from waveshare_epd import epd2in13_V3
+from waveshare_epd import epd2in7_V2
 
 from parse_utils import normalize_display_lines
 
@@ -34,22 +34,22 @@ log = logging.getLogger(__name__)
 
 
 class EPaperDisplay:
-    # Screen size in pixels for the Waveshare 2.13" V3 display.
-    DISPLAY_WIDTH  = 250
-    DISPLAY_HEIGHT = 122
+    # Screen size in pixels for the Waveshare 2.7" V2 display (landscape).
+    DISPLAY_WIDTH  = 264
+    DISPLAY_HEIGHT = 176
 
     # Text position on the screen.
     LEFT_MARGIN = 10
     TOP_MARGIN  = 4
 
     # Font settings for the 6 body lines.
-    BASE_FONT_SIZE = 14
-    MIN_FONT_SIZE  = 10
-    LINE_SPACING   = 2
+    BASE_FONT_SIZE = 20
+    MIN_FONT_SIZE  = 12
+    LINE_SPACING   = 3
 
     # Fixed header drawn at the top of every screen.
     TITLE_TEXT       = "PiScout"
-    TITLE_FONT_SIZE  = 16
+    TITLE_FONT_SIZE  = 20
     TITLE_UNDERLINE_GAP = 1
     TITLE_BODY_GAP      = 2
 
@@ -102,7 +102,7 @@ class EPaperDisplay:
         )
 
         # Create the Waveshare display object.
-        self.epd = epd2in13_V3.EPD()
+        self.epd = epd2in7_V2.EPD()
 
         # RLock allows one method to safely call another method that also uses
         # the same lock, which happens during sleep/wake sequences.
@@ -240,17 +240,22 @@ class EPaperDisplay:
             # Decide between partial and full refresh.
             if self.partial_refresh_count >= self._partial_refresh_limit or not self._partial_base_ready:
                 # Full refresh: clears ghosting and seeds both e-paper frame
-                # buffers via displayPartBaseImage. Both buffers must be seeded
-                # before displayPartial can run without ghosting.
-                self.epd.Clear(0xFF)
-                self.epd.displayPartBaseImage(buffer)
+                # buffers via display_Base. Both buffers must be seeded
+                # before display_Partial can run without ghosting.
+                self.epd.Clear()
+                self.epd.display_Base(buffer)
                 self.partial_refresh_count  = 0
                 self._partial_base_ready    = True
                 log.debug("Full refresh performed (ghost prevention or first render)")
             else:
                 # Partial refresh: faster, avoids full-screen flash.
+                # The window is the whole panel in its native portrait
+                # coordinates (176 x 264), since getbuffer has already
+                # rotated the landscape image into that orientation.
                 try:
-                    self.epd.displayPartial(buffer)
+                    self.epd.display_Partial(
+                        buffer, 0, 0, self.epd.width, self.epd.height
+                    )
                     self.partial_refresh_count += 1
                     log.debug(
                         "Partial refresh performed (%d/%d)",
@@ -263,8 +268,8 @@ class EPaperDisplay:
                         "Partial refresh failed. Falling back to full refresh.",
                         exc_info=True,
                     )
-                    self.epd.Clear(0xFF)
-                    self.epd.displayPartBaseImage(buffer)
+                    self.epd.Clear()
+                    self.epd.display_Base(buffer)
                     self.partial_refresh_count = 0
                     self._partial_base_ready   = True
 
