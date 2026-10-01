@@ -56,22 +56,15 @@ log = logging.getLogger(__name__)
 # ============================================================
 
 def _get_mode() -> int:
-    try:
-        return max(0, min(2, int(getattr(config, "PORT_HISTORY_MODE", 0))))
-    except (TypeError, ValueError):
-        return 0
+    return max(0, min(2, int(config.PORT_HISTORY_MODE)))
 
 
 def _get_limit() -> int:
-    try:
-        return max(1, int(getattr(config, "PORT_HISTORY_LIMIT", 50)))
-    except (TypeError, ValueError):
-        return 50
+    return max(1, int(config.PORT_HISTORY_LIMIT))
 
 
 def _get_path() -> Path:
-    raw = str(getattr(config, "PORT_HISTORY_PATH", "/data/piscout")).strip()
-    return Path(raw)
+    return Path(str(config.PORT_HISTORY_PATH).strip())
 
 
 # ============================================================

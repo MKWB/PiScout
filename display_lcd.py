@@ -214,38 +214,6 @@ class LCDDisplay:
 
             return True
 
-    def sleep(self):
-        """
-        Optional low-activity display state.
-
-        LCDs do not require an explicit sleep mode the way e-paper does.
-        This method is intentionally a no-op so the rest of the project
-        can call display.sleep() without needing to know the display type.
-
-        Returns:
-            False to indicate no state change was made.
-        """
-        with self.lock:
-            self._ensure_initialized()
-            return False
-
-    def wake(self):
-        """
-        Make sure the LCD is visible again.
-
-        Returns:
-            True if the backlight was turned on.
-            False if it was already on.
-        """
-        with self.lock:
-            self._ensure_initialized()
-
-            if self.backlight_on:
-                return False
-
-            self._set_backlight(True)
-            return True
-
     def shutdown(self, clear_first=False, backlight_off=True):
         """
         Shut down the LCD as gracefully as possible.
@@ -273,33 +241,6 @@ class LCDDisplay:
 
             self.initialized  = False
             self.backlight_on = False
-
-    def force_refresh(self):
-        """
-        Redraw the current screen contents again.
-
-        Returns:
-            True if the display was redrawn.
-            False if there was nothing to redraw.
-        """
-        with self.lock:
-            if self.last_lines is None:
-                return False
-            return self.show_lines(self.last_lines, force=True)
-
-    def get_status(self):
-        """
-        Return basic display status info.
-        Useful for debugging.
-        """
-        with self.lock:
-            return {
-                "initialized":          self.initialized,
-                "backlight_on":         self.backlight_on,
-                "last_lines":           self.last_lines,
-                "rotate_180":           self.rotate_180,
-                "backlight_brightness": self.backlight_brightness,
-            }
 
     def _render_image(self, lines):
         """

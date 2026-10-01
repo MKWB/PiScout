@@ -20,7 +20,8 @@ What this file does:
 - Read the Pi's MAC address from the kernel
 - Build a minimal valid LLDP Ethernet frame
 - Build a minimal valid CDP 802.3/LLC/SNAP frame
-- Send both once on link-up via raw AF_PACKET sockets
+- Send the LLDP trigger once and run a persistent CDP burst on link-up
+  via raw AF_PACKET sockets
 
 What this file does NOT do:
 - Listen for any frames (that is capture_raw.py's job)
@@ -345,29 +346,6 @@ def _build_cdp_frame(src_mac: bytes, interface: str) -> bytes:
     return eth_header + payload
 
 
-def send_cdp_trigger(interface: str, src_mac: Optional[bytes] = None) -> bool:
-    """
-    Send a single CDP trigger frame on the given interface.
-
-    Used for the initial frame sent before the persistent burst loop starts.
-
-    Parameters:
-        interface : interface name such as "eth0"
-        src_mac   : 6-byte MAC address; read from sysfs if not provided
-
-    Returns True if sent, False if MAC lookup failed.
-    """
-    if src_mac is None:
-        src_mac = get_interface_mac(interface)
-
-    if src_mac is None:
-        log.warning("CDP trigger skipped: could not read MAC for %s", interface)
-        return False
-
-    frame = _build_cdp_frame(src_mac, interface)
-    return _send_raw_frame(interface, frame, "CDP")
-
-
 def start_persistent_cdp_burst(
     interface:    str,
     cancel_event: threading.Event,
@@ -441,25 +419,3 @@ def start_persistent_cdp_burst(
         interval * 1000,
     )
     return t
-
-
-# ---------------------------------------------------------------------------
-# Combined trigger — call this from race.py
-# ---------------------------------------------------------------------------
-
-def send_all_triggers(interface: str, src_mac: Optional[bytes] = None) -> None:
-    """
-    Send one LLDP frame and one initial CDP frame on the given interface.
-
-    Called after the raw capture socket is confirmed open so no frames
-    are missed. The persistent CDP burst is started separately via
-    start_persistent_cdp_burst() so it continues throughout the window.
-
-    Parameters:
-        interface : interface name such as "eth0"
-        src_mac   : 6-byte MAC address; read from sysfs if not provided
-
-    Failures are logged but do not raise exceptions.
-    """
-    send_lldp_trigger(interface, src_mac)
-    send_cdp_trigger(interface, src_mac)
