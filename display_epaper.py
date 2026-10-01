@@ -137,14 +137,9 @@ class EPaperDisplay:
     #  Public interface                                                    #
     # ------------------------------------------------------------------ #
 
-    def initialize(self, clear_on_start=False):
+    def initialize(self):
         """
         Start the e-paper display.
-
-        clear_on_start:
-            If True, clear the screen to white when starting up.
-            Leave False for faster appliance behavior so we can jump
-            directly to the boot screen without an extra blank-screen flash.
         """
         with self.lock:
             if self.initialized and not self.sleeping:
@@ -158,26 +153,6 @@ class EPaperDisplay:
             # refresh to ensure a clean starting state.
             self.partial_refresh_count = self._partial_refresh_limit
 
-            if clear_on_start:
-                self.clear()
-
-    def clear(self, sleep_after=True):
-        """
-        Clear the screen to white.
-
-        sleep_after:
-            If True, put the panel back to sleep after clearing.
-        """
-        with self.lock:
-            self._ensure_awake()
-            self.epd.Clear(0xFF)
-            self.last_lines            = ["", "", "", "", "", ""]
-            self.last_refresh_time     = time.monotonic()
-            self.partial_refresh_count = self._partial_refresh_limit
-
-            if sleep_after and self.auto_sleep and not self.startup_mode:
-                self.sleep()
-
     def sleep(self):
         """
         Put the e-paper display into sleep mode.
@@ -190,26 +165,15 @@ class EPaperDisplay:
             self.epd.sleep()
             self.sleeping = True
 
-    def shutdown(self, clear_before_sleep=False):
+    def shutdown(self):
         """
         Shut down the display safely.
 
-        clear_before_sleep:
-            If True, blank the screen before sleeping.
-            Leave False so the last result stays visible on screen.
+        The last result stays visible on screen after sleep.
         """
         with self.lock:
             if not self.initialized:
                 return
-
-            if clear_before_sleep:
-                try:
-                    self._ensure_awake()
-                    self.epd.Clear(0xFF)
-                    self.last_lines        = ["", "", "", "", "", ""]
-                    self.last_refresh_time = time.monotonic()
-                except Exception:
-                    pass
 
             try:
                 self.epd.sleep()
@@ -312,43 +276,6 @@ class EPaperDisplay:
                 self.sleep()
 
             return True
-
-    def force_refresh(self):
-        """
-        Refresh the current screen contents again.
-
-        This redraws the same body lines and resets the partial refresh
-        counter so the next call performs a full refresh.
-
-        Returns:
-            True if the display was redrawn.
-            False if there was nothing to redraw.
-        """
-        with self.lock:
-            if self.last_lines is None:
-                return False
-
-            # Reset the counter so the forced refresh is always a full refresh.
-            self.partial_refresh_count = self._partial_refresh_limit
-            return self.show_lines(self.last_lines, force=True)
-
-    def get_status(self):
-        """
-        Return basic display status info.
-        Useful for debugging.
-        """
-        with self.lock:
-            return {
-                "initialized":             self.initialized,
-                "sleeping":                self.sleeping,
-                "startup_mode":            self.startup_mode,
-                "last_lines":              self.last_lines,
-                "last_refresh_time":       self.last_refresh_time,
-                "min_refresh_interval":    self.min_refresh_interval,
-                "auto_sleep":              self.auto_sleep,
-                "partial_refresh_count":   self.partial_refresh_count,
-                "partial_refresh_limit":   self._partial_refresh_limit,
-            }
 
     # ------------------------------------------------------------------ #
     #  Private helpers                                                     #

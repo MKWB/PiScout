@@ -44,6 +44,7 @@ IP: 10.10.1.2
 PORT: Gi1/0/24
 VLAN: 120
 VOICE: 130
+LINK: 1G FD
 ```
 
 ---
@@ -103,6 +104,7 @@ The following information is shown on the e-Paper display:
 - **PORT** — Port the device is connected to
 - **VLAN** — Access VLAN
 - **VOICE** — Voice VLAN (if configured)
+- **LINK** — Link Speed
 
 A small protocol indicator in the top-right corner shows which discovery method produced the result: **SNMP**, **LLDP**, or **CDP**.
 

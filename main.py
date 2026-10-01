@@ -41,7 +41,7 @@ import history
 
 # Configure logging before importing display or discovery modules
 # so their loggers inherit the correct level.
-_log_level_str = (getattr(config, "LOG_LEVEL", "WARNING") or "WARNING").upper()
+_log_level_str = (config.LOG_LEVEL or "WARNING").upper()
 _log_level     = getattr(logging, _log_level_str, logging.WARNING)
 
 logging.basicConfig(
@@ -59,7 +59,7 @@ log.info("Logging initialized at level %s", _log_level_str)
 # ============================================================
 
 def _get_display_type() -> str:
-    return str(getattr(config, "DISPLAY_TYPE", "epaper")).lower().strip()
+    return str(config.DISPLAY_TYPE).lower().strip()
 
 
 def _create_display():
@@ -67,27 +67,27 @@ def _create_display():
     Instantiate the correct display driver based on config.DISPLAY_TYPE.
     """
     display_type = _get_display_type()
-    font_path    = getattr(config, "DISPLAY_FONT_PATH", None)
+    font_path    = config.DISPLAY_FONT_PATH
 
     if display_type == "epaper":
         from display_epaper import EPaperDisplay
         return EPaperDisplay(
             font_path=font_path,
-            min_refresh_interval=int(getattr(config, "EPAPER_MIN_REFRESH_INTERVAL", 10)),
-            auto_sleep=bool(getattr(config, "EPAPER_AUTO_SLEEP", True)),
+            min_refresh_interval=int(config.EPAPER_MIN_REFRESH_INTERVAL),
+            auto_sleep=bool(config.EPAPER_AUTO_SLEEP),
             startup_mode=True,
-            partial_refresh_limit=int(getattr(config, "EPAPER_PARTIAL_REFRESH_LIMIT", 8)),
+            partial_refresh_limit=int(config.EPAPER_PARTIAL_REFRESH_LIMIT),
         )
 
     if display_type == "lcd":
         from display_lcd import LCDDisplay
         return LCDDisplay(
             font_path=font_path,
-            rotate_180=bool(getattr(config, "LCD_ROTATE_180", True)),
-            clear_on_start=bool(getattr(config, "LCD_CLEAR_ON_START", True)),
-            background_color=getattr(config, "LCD_BACKGROUND_COLOR", (0, 0, 0)),
-            text_color=getattr(config, "LCD_TEXT_COLOR", (255, 255, 255)),
-            backlight_brightness=int(getattr(config, "LCD_BACKLIGHT_BRIGHTNESS", 100)),
+            rotate_180=bool(config.LCD_ROTATE_180),
+            clear_on_start=bool(config.LCD_CLEAR_ON_START),
+            background_color=config.LCD_BACKGROUND_COLOR,
+            text_color=config.LCD_TEXT_COLOR,
+            backlight_brightness=int(config.LCD_BACKLIGHT_BRIGHTNESS),
         )
 
     log.warning(
@@ -254,10 +254,10 @@ def run() -> None:
     signal.signal(signal.SIGINT,  _sigterm_handler)
 
     # --- Configuration ---
-    interface            = str(getattr(config, "NETWORK_INTERFACE",     "eth0"))
-    disc_timeout         = float(getattr(config, "DISCOVERY_TIMEOUT",   120.0))
-    reveal_delay         = float(getattr(config, "RESULT_REVEAL_DELAY",   1.5))
-    partial_display_delay = float(getattr(config, "PARTIAL_DISPLAY_DELAY", 30.0))
+    interface            = str(config.NETWORK_INTERFACE)
+    disc_timeout         = float(config.DISCOVERY_TIMEOUT)
+    reveal_delay         = float(config.RESULT_REVEAL_DELAY)
+    partial_display_delay = float(config.PARTIAL_DISPLAY_DELAY)
 
     log.info("Starting PiScout")
     log.info("DISPLAY_TYPE=%s",           _get_display_type())
